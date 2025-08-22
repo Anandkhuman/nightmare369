@@ -692,6 +692,29 @@
     .contact-section a:hover {
         text-decoration: underline;
     }
+    
+    /* --- NEW: EDITABLE POSTER STYLES --- */
+    #posterContent [contenteditable="true"] {
+        cursor: text;
+        padding: 2px 4px;
+        border-radius: 3px;
+        transition: background-color 0.3s, box-shadow 0.3s;
+        -webkit-user-select: text; /* Allow text selection */
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+    }
+    #posterContent [contenteditable="true"]:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    }
+    #posterContent [contenteditable="true"]:focus {
+        outline: 1px dashed #ffeb3b;
+        background-color: rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+    }
+    /* --- END: EDITABLE POSTER STYLES --- */
+
 
     /* --- NEW STYLES for unified popup inputs and buttons --- */
     .gamePopDiv .tableInp {
@@ -2642,8 +2665,9 @@ function updateBusinessInfo() {
     const soldCount = soldTickets.length;
     const price = gameSettingsData.ticketPrice || 0;
     const commission = gameSettingsData.agentCommission || 0;
-    
-    // A ticket has a commission if it was sold by a user with the 'agent' role.
+    const totalTickets = gameSettingsData.totalTickets || 0;
+    const ticketsLeft = totalTickets - soldCount;
+
     const agentUids = new Set(allUsersData.filter(u => u.role === 'agent').map(u => u.uid));
     const agentSoldCount = soldTickets.filter(t => t.agent_uid && agentUids.has(t.agent_uid)).length;
     const totalCommission = agentSoldCount * commission;
@@ -2656,8 +2680,9 @@ function updateBusinessInfo() {
     const adminTable = document.getElementById('businessInfoTable');
     if(adminTable && currentView === 'adminDashboardView') {
         adminTable.innerHTML = `<tbody>
-            <tr><td>Total Tickets</td><td>${gameSettingsData.totalTickets || 0}</td></tr>
+            <tr><td>Total Tickets</td><td>${totalTickets}</td></tr>
             <tr><td>Tickets Sold</td><td>${soldCount}</td></tr>
+            <tr><td>Tickets Left</td><td>${ticketsLeft}</td></tr>
             <tr><td>Total Revenue</td><td>₹ ${totalRevenue.toLocaleString()}</td></tr>
             <tr><td>Total Agent Commission</td><td>₹ ${totalCommission.toLocaleString()}</td></tr>
             <tr><td>Total Prize Money</td><td>₹ ${totalPrizeMoney.toLocaleString()}</td></tr>
@@ -2921,16 +2946,16 @@ function showPosterModal() {
         gameTimeFormatted = date.toLocaleString('en-US', { weekday: 'long', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
-    const dividendNamesHTML = activeDividends.map(d => `<p>${d.name}</p>`).join('');
-    const dividendAmountsHTML = activeDividends.map(d => `<p>Rs ${d.amount.toLocaleString()}</p>`).join('');
+    const dividendNamesHTML = activeDividends.map(d => `<p contenteditable="true">${d.name}</p>`).join('');
+    const dividendAmountsHTML = activeDividends.map(d => `<p contenteditable="true">Rs ${d.amount.toLocaleString()}</p>`).join('');
 
     const posterHTML = `
-        <h1 class="poster-title">${title}</h1>
-        <p class="poster-datetime">${gameTimeFormatted}</p>
-        <p class="poster-tagline">Grab Your Tickets & Get Ready to Win!</p>
+        <h1 class="poster-title" contenteditable="true">${title}</h1>
+        <p class="poster-datetime" contenteditable="true">${gameTimeFormatted}</p>
+        <p class="poster-tagline" contenteditable="true">Grab Your Tickets & Get Ready to Win!</p>
 
         <div class="prize-section">
-            <h3>PRIZES</h3>
+            <h3 contenteditable="true">PRIZES</h3>
             <div class="prize-list">
                 <div class="prize-column" id="prize-names">
                     ${dividendNamesHTML}
@@ -2941,11 +2966,11 @@ function showPosterModal() {
             </div>
         </div>
 
-        <p class="ticket-details">Get ticket @ Rs ${ticketPrice}. Total tickets only (${totalTickets})</p>
+        <p class="ticket-details" contenteditable="true">Get ticket @ Rs ${ticketPrice}. Total tickets only (${totalTickets})</p>
 
         <div class="contact-section">
-            <p>visit: <a href="${websiteLink}" target="_blank">${websiteLink.replace(/^https?:\/\//, '')}</a></p>
-            <p>Whatsapp: <span>${adminPhone}</span></p>
+            <p contenteditable="true">visit: <a href="${websiteLink}" target="_blank">${websiteLink.replace(/^https?:\/\//, '')}</a></p>
+            <p>Whatsapp: <span contenteditable="true">${adminPhone}</span></p>
         </div>
     `;
 
@@ -3021,17 +3046,25 @@ async function sharePoster() {
 
 function updateAgentInfoUI() {
     if (!currentUser || currentView !== 'agentDashboardView') return;
+    
     const agentData = allUsersData.find(u => u.uid === currentUser.uid);
     if (agentData) {
-        document.getElementById('agentNameInp').value = agentData.name;
-        document.getElementById('agentPhoneInp').value = agentData.phone;
+        document.getElementById('agentNameInp').value = agentData.name || '';
+        document.getElementById('agentPhoneInp').value = agentData.phone || '';
     }
+    
     const mySoldTickets = allTicketsData.filter(t => t.agent_uid === currentUser.uid);
     const myEarnings = mySoldTickets.length * (gameSettingsData.agentCommission || 0);
     document.getElementById('earningBtn').textContent = `₹ ${myEarnings.toLocaleString()}`;
 
+    const totalTickets = gameSettingsData.totalTickets || 0;
+    const totalSoldCount = allTicketsData.filter(t => t.is_sold).length;
+    const ticketsLeft = totalTickets - totalSoldCount;
+
     document.getElementById('agentBusinessInfoTable').innerHTML = `<tbody>
-        <tr><td>Game Title</td><td>NightMare369</td></tr>
+        <tr><td>Total Tickets</td><td>${totalTickets}</td></tr>
+        <tr><td>Total Sold</td><td>${totalSoldCount}</td></tr>
+        <tr><td>Tickets Left</td><td>${ticketsLeft}</td></tr>
         <tr><td>Ticket Price</td><td>₹ ${(gameSettingsData.ticketPrice || 0).toLocaleString()}</td></tr>
         <tr><td>My Commission/Tkt</td><td>₹ ${(gameSettingsData.agentCommission || 0).toLocaleString()}</td></tr>
     </tbody>`;
