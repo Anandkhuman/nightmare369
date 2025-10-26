@@ -757,12 +757,17 @@
             <button type="submit" class="btn">Update UPI</button>
         </form>
 
-        <!-- ==================== NEW WITHDRAWAL SETTINGS SECTION ==================== -->
+        <!-- ==================== UPDATED WITHDRAWAL SETTINGS SECTION ==================== -->
         <hr style="border-color: var(--gold); opacity: 0.5;">   
+        <h3 style="color: var(--gold);">Withdrawal Settings</h3>
         <form id="withdrawal-settings-form">
             <div class="form-group">
                 <label for="admin-min-bets">Minimum Bets for Withdrawal</label>
                 <input type="number" id="admin-min-bets" placeholder="e.g., 20" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-min-withdrawal-amount">Minimum Withdrawal Amount (₹)</label>
+                <input type="number" id="admin-min-withdrawal-amount" placeholder="e.g., 500" required>
             </div>
             <div class="form-group">
                 <label for="admin-withdrawal-charge">Withdrawal Charge (%)</label>
@@ -770,11 +775,11 @@
             </div>
             <button type="submit" class="btn">Update Withdrawal Settings</button>
         </form>
-        <!-- ==================== END NEW SECTION ==================== -->
+        <!-- ==================== END SECTION ==================== -->
 
         <!-- ==================== NEW REGISTRATION BONUS SETTINGS ==================== -->
         <hr style="border-color: var(--gold); opacity: 0.5;">
-        
+        <h3 style="color: var(--gold);">Bonus Settings</h3>
         <form id="bonus-settings-form">
             <div class="form-group">
                 <label for="admin-registration-bonus">First Registration Bonus (₹)</label>
@@ -966,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
         withdrawalSettings: {
             minBets: 20,
             chargePercent: 5,
-            minAmount: 500
+            minAmount: 500 // NEW: Minimum withdrawal amount
         },
         bonusSettings: {
             registrationAmount: 10,
@@ -1043,8 +1048,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('page-admin').classList.contains('active')) {
             const minBetsInput = document.getElementById('admin-min-bets');
             const chargeInput = document.getElementById('admin-withdrawal-charge');
+            const minAmountInput = document.getElementById('admin-min-withdrawal-amount');
             if (minBetsInput) minBetsInput.value = AppState.withdrawalSettings.minBets;
             if (chargeInput) chargeInput.value = AppState.withdrawalSettings.chargePercent;
+            if (minAmountInput) minAmountInput.value = AppState.withdrawalSettings.minAmount;
         }
     });
 
@@ -1653,11 +1660,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const adminMinBetsInput = document.getElementById('admin-min-bets');
         const adminWithdrawalChargeInput = document.getElementById('admin-withdrawal-charge');
+        const adminMinWithdrawalAmountInput = document.getElementById('admin-min-withdrawal-amount');
         if (adminMinBetsInput) {
             adminMinBetsInput.value = AppState.withdrawalSettings.minBets;
         }
         if (adminWithdrawalChargeInput) {
             adminWithdrawalChargeInput.value = AppState.withdrawalSettings.chargePercent;
+        }
+        if (adminMinWithdrawalAmountInput) {
+            adminMinWithdrawalAmountInput.value = AppState.withdrawalSettings.minAmount;
         }
 
         const adminRegistrationBonusInput = document.getElementById('admin-registration-bonus');
@@ -2408,6 +2419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const minBets = parseInt(document.getElementById('admin-min-bets').value, 10);
         const chargePercent = parseFloat(document.getElementById('admin-withdrawal-charge').value);
+        const minAmount = parseInt(document.getElementById('admin-min-withdrawal-amount').value, 10);
 
         if (isNaN(minBets) || minBets < 0) {
             alert('Please enter a valid number for minimum bets.');
@@ -2417,10 +2429,15 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please enter a valid number for withdrawal charge.');
             return;
         }
+        if (isNaN(minAmount) || minAmount < 0) {
+            alert('Please enter a valid, non-negative number for minimum withdrawal amount.');
+            return;
+        }
 
         const newSettings = {
             minBets: minBets,
-            chargePercent: chargePercent
+            chargePercent: chargePercent,
+            minAmount: minAmount
         };
 
         db.ref('settings/withdrawal').update(newSettings)
